@@ -401,53 +401,67 @@ def admindashboard():
         st.dataframe(df, use_container_width=True)
 
 def userdashboard():
-    st.title("Dashboard User")
+    st.title("📊 Dashboard User")
     st.markdown("---")
     
     uid = st.session_state['userid']
     rows = gettradesforuser(uid, allifadmin=False)
-    # basic stats
-    df = pd.DataFrame(rows) if rows else pd.DataFrame()
-    totaltrades = len(df)
-    totalprofit = df['profitusd'].sum() if not df.empty else 0.0
     
-    st.metric("Total Transaksi", totaltrades)
-    st.metric("Total Profit USD", f"{totalprofit:.2f}")
+    # PERBAIKAN: Cek kolom ada sebelum akses
+    df = pd.DataFrame([dict(row) for row in rows]) if rows else pd.DataFrame()
+    
+    totaltrades = len(df)
+    totalprofit = 0.0
+    
+    # Aman: cek kolom ada dan df tidak kosong
+    if not df.empty and 'profitusd' in df.columns:
+        totalprofit = df['profitusd'].sum()
+    
+    col1, col2 = st.columns(2)
+    col1.metric("📈 Total Transaksi", totaltrades)
+    col2.metric("💰 Total Profit USD", f"{totalprofit:.2f}")
     
     st.markdown("---")
-    st.subheader("Tambah Catatan Trading")
+    st.subheader("➕ Tambah Catatan Trading")
     
     with st.form("tradeform"):
         col1, col2 = st.columns(2)
         
         with col1:
             pair = st.selectbox("Pair", PAIROPTIONS)
-            position = st.radio("Posisi", ["BUY","SELL"], horizontal=True)
-            lot = st.number_input("Lot", min_value=0.0, value=0.01, format="%.2f")
-            openprice = st.number_input("Open Price", format="%.4f")
+            position = st.radio("Posisi", ["BUY", "SELL"], horizontal=True)
+            lot = st.number_input("Lot", min_value=0.01, value=0.01, step=0.01, format="%.2f")
+            openprice = st.number_input("Open Price", min_value=0.0, format="%.4f")
         
         with col2:
-            # ----------------------- summary
             marketpriceval = getmarketpriceapi(pair)
-            marketprice = st.number_input("Market Price (otomatis, bisa diubah)", value=float(marketpriceval) if marketpriceval else 0.0)
-            closeprice = st.number_input("Close Price", value=marketprice if marketprice else 0.0, format="%.4f")
+            marketprice = st.number_input(
+                "Market Price (otomatis)", 
+                value=float(marketpriceval) if marketpriceval else 0.0,
+                format="%.4f"
+            )
+            closeprice = st.number_input("Close Price", min_value=0.0, format="%.4f")
             tp = st.number_input("Take Profit (opsional)", value=0.0, format="%.4f")
             sl = st.number_input("Stop Loss (opsional)", value=0.0, format="%.4f")
-            datein = st.date_input("Tanggal", value=datetime.utcnow().date())
-            timein = st.time_input("Waktu", value=datetime.utcnow().time())
-            note = st.text_area("Catatan (opsional)")
+            
+            col_date, col_time = st.columns(2)
+            with col_date:
+                datein = st.date_input("📅 Tanggal", value=datetime.now().date())
+            with col_time:
+                timein = st.time_input("🕒 Waktu", value=datetime.now().time())
+            
+            note = st.text_area("📝 Catatan (opsional)")
         
-        submitted = st.form_submit_button("Simpan Transaksi")
+        submitted = st.form_submit_button("💾 Simpan Transaksi", use_container_width=True)
         
         if submitted:
-            # ----------------------- get market price automatically but editable
-            if openprice == 0 or closeprice == 0 or lot == 0:
-                st.error("Open, Close, dan Lot harus > 0")
+            if openprice <= 0 or closeprice <= 0 or lot <= 0:
+                st.error("❌ Open Price, Close Price, dan Lot harus > 0")
             else:
                 pips = calculatepips(pair, openprice, closeprice)
                 profitusd = calculateprofitusd(pair, openprice, closeprice, lot, position)
-                rate = getusdtoidr() or 0.0
-                profitidr = profitusd * rate if rate else 0.0
+                rate = getusdtoidr() or 16000  # fallback rate
+                profitidr = profitusd * rate
                 
                 data = {
                     'userid': uid,
@@ -456,29 +470,47 @@ def userdashboard():
                     'lot': lot,
                     'openprice': openprice,
                     'closeprice': closeprice,
-                    'takeprofit': tp if tp != 0 else None,
-                    'stoploss': sl if sl != 0 else None,
+                    'takeprofit': tp if tp > 0 else None,
+                    'stoploss': sl if sl > 0 else None,
                     'date': datein.isoformat(),
                     'time': timein.strftime("%H:%M:%S"),
-                    'note': note,
-                    'profitusd': profitusd,
-                    'profitidr': profitidr,
-                    'pips': pips
+                    'note': note or None,
+                    'profitusd': round(profitusd, 2),
+                    'profitidr': round(profitidr, 0),
+                    'pips': round(pips, 4)
                 }
                 inserttradedata(data)
-                st.success("Transaksi tersimpan")
+                st.success("✅ Transaksi tersimpan!")
+                st.balloons()
                 st.rerun()
     
     st.markdown("---")
-    st.subheader("Riwayat Trading")
+    st.subheader("📋 Riwayat Trading")
+    
     rows = gettradesforuser(uid, allifadmin=False)
     if rows:
-        df = pd.DataFrame(rows)
-        st.dataframe(df, use_container_width=True)
-        
-        if st.button("Export CSV"):
-            csv = df.to_csv(index=False)
-            st.download_button("Download CSV", data=csv, file_name="tradinghistory.csv")
+        df = pd.DataFrame([dict(row) for row in rows])
+        # Pilih kolom penting saja
+        display_cols = ['id', 'pair', 'type', 'lot', 'openprice', 'closeprice', 
+                       'profitusd', 'profitidr', 'pips', 'date', 'time']
+        available_cols = [col for col in display_cols if col in df.columns]
+        if available_cols:
+            st.dataframe(df[available_cols], use_container_width=True, hide_index=True)
+            
+            # Export CSV
+            if st.button("📥 Export CSV", use_container_width=True):
+                csv = df[available_cols].to_csv(index=False)
+                st.download_button(
+                    "⬇️ Download CSV", 
+                    data=csv, 
+                    file_name=f"trading_{st.session_state['username']}_{datein}.csv",
+                    mime="text/csv"
+                )
+        else:
+            st.info("ℹ️ Data transaksi kosong")
+    else:
+        st.info("ℹ️ Belum ada riwayat trading. Tambahkan transaksi pertama Anda!")
+
     # ----------------------- validate
 
 def main():
