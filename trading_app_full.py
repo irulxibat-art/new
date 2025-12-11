@@ -1,7 +1,3 @@
-Modified trading_app_full.py
-
-Added custom background UI compatible with Streamlit Cloud
-
 import streamlit as st st.markdown("""
 
 <style>
@@ -18,16 +14,6 @@ body {
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 </style>""", unsafe_allow_html=True)
-
-Perubahan:
-
-- Menghapus fitur toko tutup (storestatus)
-
-- Menghapus auto market price dan live price
-
-- Menghapus auto hitung profit
-
-- Menambah checkbox: PROFIT atau LOSS manual
 
 import streamlit as st import sqlite3 import os import hashlib import binascii import time from datetime import datetime import pandas as pd from io import StringIO
 
