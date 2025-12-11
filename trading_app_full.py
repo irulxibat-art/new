@@ -1,4 +1,3 @@
-# File: trading_app_full_fixed.py
 import streamlit as st
 import sqlite3
 import os
@@ -66,11 +65,11 @@ def initdb():
     )''')
     conn.commit()
     
-    # ensure default settings
+    # ensure default settings - PERBAIKAN DI SINI
     c.execute("SELECT value FROM tsettings WHERE key='storestatus'")
     r = c.fetchone()
     if not r:
-        c.execute("INSERT OR REPLACE INTO tsettings(key, value) VALUES (?,?), ('storestatus', 'open')")
+        c.execute("INSERT OR REPLACE INTO tsettings(key, value) VALUES (?,?)", ('storestatus', 'open'))
         conn.commit()
     
     # create default admin if no users exist
@@ -84,6 +83,7 @@ def initdb():
         conn.commit()
     
     conn.close()
+
 
 def hashpassword(password: str) -> str:
     """Return hex-encoded hash"""
