@@ -215,7 +215,7 @@ def userdashboard():
         timein = st.time_input("Waktu", value=datetime.now().time())
         note = st.text_area("Catatan (opsional)")
 
-        submitted = submitted = st.form_submit_button("SIMPAN")("SIMPAN")
+        submitted = submitted = st.form_submit_button("SIMPAN")"SIMPAN")
 
         if submitted:
             data = {
