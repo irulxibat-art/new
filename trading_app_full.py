@@ -193,6 +193,7 @@ def userdashboard():
     st.subheader("Tambah Catatan Trading")
 
     with st.form("tradeform"):
+        
         col1, col2 = st.columns(2)
         with col1:
             pair = st.selectbox("Pair", PAIROPTIONS)
@@ -210,11 +211,11 @@ def userdashboard():
             profitidr = st.number_input("Profit IDR (manual)", value=0.0)
             pips = st.number_input("Pips (manual)", value=0.0)
 
-        datein = st.date_input("Tanggal", value=datetime.now().date())("Tanggal", value=datetime.now().date())
+        datein = st.date_input("Tanggal", value=datetime.now().date())
         timein = st.time_input("Waktu", value=datetime.now().time())
         note = st.text_area("Catatan (opsional)")
 
-        submitted = st.form_submit_button("SIMPAN")
+        submitted = submitted = st.form_submit_button("SIMPAN")("SIMPAN")
 
         if submitted:
             data = {
