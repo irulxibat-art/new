@@ -1,20 +1,3 @@
-import streamlit as st st.markdown("""
-
-<style>
-body {
-    background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
-    background-attachment: fixed;
-}
-
-.main > div {
-    background: rgba(255, 255, 255, 0.18) !important;
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-</style>""", unsafe_allow_html=True)
-
 import streamlit as st import sqlite3 import os import hashlib import binascii import time from datetime import datetime import pandas as pd from io import StringIO
 
 DBPATH = "tradingapp.db" SALT = b"tradingappsaltv1" PAIROPTIONS = ["XAUUSD", "BTCUSD", "ETHUSD", "USTEC", "USOIL", "EURUSD", "USDJPY"]
