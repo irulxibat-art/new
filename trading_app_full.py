@@ -204,8 +204,8 @@ def setsetting(key, value):
     conn.close()
 
 # -----------------------
-# st.cache_data(ttl=60)  # cache 60 seconds for market price
-@st.cache_data(ttl=60)
+# st.cache_data(ttl=5)  # cache 5 seconds for market price
+@st.cache_data(ttl=5)
 def getmarketpriceapi(pair):
     pair = pair.upper()
     try:
@@ -434,12 +434,16 @@ def userdashboard():
             openprice = st.number_input("Open Price", min_value=0.0, format="%.2f")
         
         with col2:
-            marketpriceval = getmarketpriceapi(pair)
+            marketprice_live = getmarketpriceapi(pair)
+            if marketprice_live:
+                st.metric("🟢 LIVE PRICE", f"${marketprice_live:.2f}")
+    
             marketprice = st.number_input(
-                "Market Price (otomatis)", 
-                value=float(marketpriceval) if marketpriceval else 0.0,
-                format="%.2f"
-            )
+                "💹 Market Price",value=float(marketprice_live)
+                
+            if marketprice_live else 0.0,
+            format="%.2f"
+    )
             closeprice = st.number_input("Close Price", min_value=0.0, format="%.2f")
             tp = st.number_input("Take Profit (opsional)", value=0.0, format="%.2f")
             sl = st.number_input("Stop Loss (opsional)", value=0.0, format="%.2f")
