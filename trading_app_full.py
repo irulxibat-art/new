@@ -96,14 +96,14 @@ def verifypassword(password: str, storedhash: str) -> bool:
 
 # Password hashing using PBKDF2-HMAC SHA256
 
-def adduser(username, password, roleuser):
+def adduser(username, password, role):  # PERBAIKAN: hapus 'user' dari parameter
     conn = getdbconnection()
     c = conn.cursor()
     pwhash = hashpassword(password)
     created = datetime.utcnow().isoformat()
     try:
         c.execute("INSERT INTO tuser(username,passwordhash,role,status,createdat) VALUES (?,?,?,?,?)",
-                 (username, pwhash, role, "active", created))
+                 (username, pwhash, role, "active", created))  # PERBAIKAN: gunakan 'role' bukan 'roleuser'
         conn.commit()
         return True, "User created"
     except sqlite3.IntegrityError:
@@ -322,7 +322,6 @@ def admindashboard():
     st.title("Dashboard Admin")
     st.markdown("---")
     
-    # ----------------------- clear session
     status = getsetting('storestatus') or 'open'
     col1, col2 = st.columns(2)
     
@@ -332,10 +331,10 @@ def admindashboard():
         if st.button("Simpan Status Toko"):
             setsetting('storestatus', new)
             st.success("Status toko diperbarui")
+            st.rerun()
     
     with col2:
         st.subheader("Statistik Singkat")
-        # store status
         conn = getdbconnection()
         c = conn.cursor()
         c.execute("SELECT COUNT(*) FROM ttrading")
@@ -355,44 +354,50 @@ def admindashboard():
     
     if st.session_state.get('showadduser'):
         with st.form("adduserform"):
-            newusername = st.text_input("Username")
+            newusername = st.text_input("Username baru")
             newpassword = st.text_input("Password", type="password")
             newrole = st.selectbox("Role", ["user", "admin"])
             submitted = st.form_submit_button("Buat User")
             
             if submitted:
-                ok, msg = adduser(newusername, newpassword, newrole)
-                if ok:
-                    st.success(msg)
-                    st.session_state['showadduser'] = False
+                if not newusername or not newpassword:
+                    st.error("Username dan Password harus diisi")
                 else:
-                    st.error(msg)
+                    ok, msg = adduser(newusername, newpassword, newrole)
+                    if ok:
+                        st.success(msg)
+                        st.session_state['showadduser'] = False
+                        st.rerun()
+                    else:
+                        st.error(msg)
     
     users = listusers()
-    dfusers = pd.DataFrame(users, columns=users[0].keys()) if users else pd.DataFrame()
-    
-    if not dfusers.empty:
+    if users:
+        dfusers = pd.DataFrame([dict(u) for u in users])  # PERBAIKAN: konversi Row ke dict
         st.dataframe(dfusers)
     
+    st.markdown("---")
+    st.subheader("Action Per User")
     for u in users:
         cols = st.columns([3,1,1,1])
-        cols[0].write(f"{u['username']} - {u['role']}")
-        if cols[1].button("Aktifkan", key=f"act{u['id']}"):
+        cols[0].write(f"**{u['username']}** - {u['role']} ({u['status']})")
+        if cols[1].button("✅ Aktifkan", key=f"act{u['id']}"):
             updateuserstatus(u['id'], "active")
+            st.success(f"User {u['username']} diaktifkan")
             st.rerun()
-        if cols[2].button("Nonaktifkan", key=f"deact{u['id']}"):
+        if cols[2].button("❌ Nonaktifkan", key=f"deact{u['id']}"):
             updateuserstatus(u['id'], "inactive")
+            st.success(f"User {u['username']} dinonaktifkan")
             st.rerun()
-        if cols[3].button("Reset PW", key=f"reset{u['id']}"):
+        if cols[3].button("🔑 Reset PW", key=f"reset{u['id']}"):
             updateuserpassword(u['id'], "password123")
-            st.info(f"Password {u['username']} di-reset menjadi password123")
-    # basic stats
+            st.info(f"Password {u['username']} direset ke: **password123**")
     
     st.markdown("---")
     st.subheader("Semua Transaksi")
     rows = gettradesforuser(None, allifadmin=True)
     if rows:
-        df = pd.DataFrame(rows)
+        df = pd.DataFrame([dict(row) for row in rows])  # PERBAIKAN: konversi Row ke dict
         st.dataframe(df, use_container_width=True)
 
 def userdashboard():
