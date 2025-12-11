@@ -3,10 +3,10 @@ import sqlite3
 import os 
 import hashlib 
 import binascii 
-import time from datetime 
-import datetime 
-import pandas as pd from io 
-import StringIO
+import time 
+from datetime import datetime 
+import pandas as pd 
+from io import StringIO
 
 DBPATH = "tradingapp.db" SALT = b"tradingappsaltv1" PAIROPTIONS = ["XAUUSD", "BTCUSD", "ETHUSD", "USTEC", "USOIL", "EURUSD", "USDJPY"]
 
