@@ -431,7 +431,7 @@ def userdashboard():
             pair = st.selectbox("Pair", PAIROPTIONS)
             position = st.radio("Posisi", ["BUY", "SELL"], horizontal=True)
             lot = st.number_input("Lot", min_value=0.01, value=0.01, step=0.01, format="%.2f")
-            openprice = st.number_input("Open Price", min_value=0.0, format="%.4f")
+            openprice = st.number_input("Open Price", min_value=0.0, format="%.2f")
         
         with col2:
             marketpriceval = getmarketpriceapi(pair)
