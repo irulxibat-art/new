@@ -438,11 +438,11 @@ def userdashboard():
             marketprice = st.number_input(
                 "Market Price (otomatis)", 
                 value=float(marketpriceval) if marketpriceval else 0.0,
-                format="%.4f"
+                format="%.2f"
             )
-            closeprice = st.number_input("Close Price", min_value=0.0, format="%.4f")
-            tp = st.number_input("Take Profit (opsional)", value=0.0, format="%.4f")
-            sl = st.number_input("Stop Loss (opsional)", value=0.0, format="%.4f")
+            closeprice = st.number_input("Close Price", min_value=0.0, format="%.2f")
+            tp = st.number_input("Take Profit (opsional)", value=0.0, format="%.2f")
+            sl = st.number_input("Stop Loss (opsional)", value=0.0, format="%.2f")
             
             col_date, col_time = st.columns(2)
             with col_date:
