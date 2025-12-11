@@ -64,7 +64,7 @@ def initdb():
         date TEXT NOT NULL,
         time TEXT NOT NULL,
         note TEXT,
-        profitusd REAL NOT NULL,
+        -- profitusd REAL NOT NULL,
         profitidr REAL NOT NULL,
         pips REAL NOT NULL,
         result TEXT NOT NULL,
@@ -188,7 +188,7 @@ def userdashboard():
     uid = st.session_state['userid']
 
     rows = gettradesforuser(uid)
-    df = pd.DataFrame([dict(r) for r in rows]) if rows else pd.DataFrame()
+    df = (pd.DataFrame([dict(r) for r in rows]).drop(columns=['profitusd'], errors='ignore') if rows else pd.DataFrame())
 
     st.subheader("Tambah Catatan Trading")
 
@@ -207,7 +207,8 @@ def userdashboard():
 
             result = st.checkbox(" PROFIT (centang) / LOSS (kosong)")
 
-            profitusd = st.number_input("Profit USD (manual)", value=0.0)
+            # profitusd dihilangkan
+profitusd = 0.0
             profitidr = st.number_input("Profit IDR (manual)", value=0.0)
             pips = st.number_input("Pips (manual)", value=0.0)
 
@@ -230,7 +231,7 @@ def userdashboard():
                 'date': datein.isoformat(),
                 'time': timein.strftime("%H:%M:%S"),
                 'note': note,
-                'profitusd': profitusd,
+                # # removed profitusd  # dihilangkan
                 'profitidr': profitidr,
                 'pips': pips,
                 'result': "PROFIT" if result else "LOSS"
@@ -271,7 +272,7 @@ def admindashboard():
 
     st.subheader("Semua Transaksi")
     rows = gettradesforuser(None, allifadmin=True)
-    df2 = pd.DataFrame([dict(r) for r in rows])
+    df2 = pd.DataFrame([dict(r) for r in rows]).drop(columns=['profitusd'], errors='ignore')
     st.dataframe(df2, use_container_width=True)
 
 # ----------------------- MAIN -----------------------
