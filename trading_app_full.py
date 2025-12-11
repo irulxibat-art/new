@@ -22,10 +22,8 @@ import sqlite3
 import os
 import hashlib
 import binascii
-import time
 from datetime import datetime
 import pandas as pd
-from io import StringIO
 
 DBPATH = "tradingapp.db"
 SALT = b"tradingappsaltv1"
@@ -63,9 +61,7 @@ def initdb():
         date TEXT NOT NULL,
         time TEXT NOT NULL,
         note TEXT,
-        -- profitusd REAL NOT NULL,
         profitidr REAL NOT NULL,
-        -- pips REAL NOT NULL,
         result TEXT NOT NULL,
         createdat TEXT NOT NULL,
         updatedat TEXT,
@@ -136,12 +132,12 @@ def inserttradedata(data: dict):
     conn = getdbconnection()
     c = conn.cursor()
     c.execute("""
-        INSERT INTO ttrading(userid,pair,type,lot,openprice,closeprice,takeprofit,stoploss,date,time,note,profitusd,profitidr,pips,result,createdat)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        INSERT INTO ttrading(userid,pair,type,lot,openprice,closeprice,takeprofit,stoploss,date,time,note,profitidr,result,createdat)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """,
     (data['userid'], data['pair'], data['type'], data['lot'], data['openprice'], data['closeprice'],
      data.get('takeprofit'), data.get('stoploss'), data['date'], data['time'], data.get('note'),
-     data['profitusd'], data['profitidr'], data['pips'], data['result'], datetime.utcnow().isoformat()))
+     data['profitidr'], data['result'], datetime.utcnow().isoformat()))
     conn.commit()
     conn.close()
 
@@ -155,6 +151,13 @@ def gettradesforuser(userid, allifadmin=False):
     rows = c.fetchall()
     conn.close()
     return rows
+
+def deletetrade(trade_id):
+    conn = getdbconnection()
+    c = conn.cursor()
+    c.execute("DELETE FROM ttrading WHERE id=?", (trade_id,))
+    conn.commit()
+    conn.close()
 
 # ----------------------- FRONTEND -----------------------
 def loginpage():
@@ -192,7 +195,6 @@ def userdashboard():
     st.subheader("Tambah Catatan Trading")
 
     with st.form("tradeform"):
-        
         col1, col2 = st.columns(2)
         with col1:
             pair = st.selectbox("Pair", PAIROPTIONS)
@@ -204,9 +206,7 @@ def userdashboard():
             closeprice = st.number_input("Close Price", min_value=0.0)
             tp = st.number_input("Take Profit (opsional)", value=0.0)
             sl = st.number_input("Stop Loss (opsional)", value=0.0)
-
             result = st.checkbox(" PROFIT (centang) / LOSS (kosong)")
-
             profitidr = st.number_input("Profit IDR (manual)", value=0.0)
             
         datein = st.date_input("Tanggal", value=datetime.now().date())
@@ -228,9 +228,7 @@ def userdashboard():
                 'date': datein.isoformat(),
                 'time': timein.strftime("%H:%M:%S"),
                 'note': note,
-                # # removed profitusd  # dihilangkan
                 'profitidr': profitidr,
-                # 'pips': removed,
                 'result': "PROFIT" if result else "LOSS"
             }
             inserttradedata(data)
@@ -242,6 +240,14 @@ def userdashboard():
 
     if not df.empty:
         st.dataframe(df, use_container_width=True)
+
+        trade_ids = df['id'].tolist()
+        selected_id = st.selectbox("Pilih ID catatan untuk dihapus", trade_ids)
+
+        if st.button("Hapus Catatan"):
+            deletetrade(selected_id)
+            st.success(f"Catatan ID {selected_id} berhasil dihapus!")
+            st.rerun()
     else:
         st.info("Belum ada data.")
 
@@ -271,6 +277,15 @@ def admindashboard():
     rows = gettradesforuser(None, allifadmin=True)
     df2 = pd.DataFrame([dict(r) for r in rows]).drop(columns=['profitusd'], errors='ignore')
     st.dataframe(df2, use_container_width=True)
+
+    if not df2.empty:
+        trade_ids = df2['id'].tolist()
+        selected_id = st.selectbox("Pilih ID transaksi untuk dihapus", trade_ids)
+
+        if st.button("Hapus Transaksi"):
+            deletetrade(selected_id)
+            st.success(f"Transaksi ID {selected_id} berhasil dihapus!")
+            st.rerun()
 
 # ----------------------- MAIN -----------------------
 def main():
