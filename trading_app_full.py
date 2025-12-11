@@ -209,8 +209,8 @@ def userdashboard():
 
             # profitusd dihilangkan
 profitusd = 0.0
-            profitidr = st.number_input("Profit IDR (manual)", value=0.0)
-            pips = st.number_input("Pips (manual)", value=0.0)
+                    profitidr = st.number_input("Profit IDR (manual)", value=0.0)
+                    pips = st.number_input("Pips (manual)", value=0.0)
 
         datein = st.date_input("Tanggal", value=datetime.now().date())
         timein = st.time_input("Waktu", value=datetime.now().time())
