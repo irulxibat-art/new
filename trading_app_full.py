@@ -66,7 +66,7 @@ def initdb():
         note TEXT,
         -- profitusd REAL NOT NULL,
         profitidr REAL NOT NULL,
-        pips REAL NOT NULL,
+        -- pips REAL NOT NULL,
         result TEXT NOT NULL,
         createdat TEXT NOT NULL,
         updatedat TEXT,
@@ -188,7 +188,7 @@ def userdashboard():
     uid = st.session_state['userid']
 
     rows = gettradesforuser(uid)
-    df = (pd.DataFrame([dict(r) for r in rows]).drop(columns=['profitusd'], errors='ignore') if rows else pd.DataFrame())
+    df = (pd.DataFrame([dict(r) for r in rows]).drop(columns=['profitusd','pips'], errors='ignore') if rows else pd.DataFrame())
 
     st.subheader("Tambah Catatan Trading")
 
@@ -209,13 +209,12 @@ def userdashboard():
             result = st.checkbox(" PROFIT (centang) / LOSS (kosong)")
 
             profitidr = st.number_input("Profit IDR (manual)", value=0.0)
-            pips = st.number_input("Pips (manual)", value=0.0)
-
+            
         datein = st.date_input("Tanggal", value=datetime.now().date())
         timein = st.time_input("Waktu", value=datetime.now().time())
         note = st.text_area("Catatan (opsional)")
 
-        submitted = st.form_submit_button("SIMPAN")
+        submitted = submitted = st.form_submit_button("SIMPAN")"SIMPAN")
 
         if submitted:
             data = {
@@ -232,7 +231,7 @@ def userdashboard():
                 'note': note,
                 # # removed profitusd  # dihilangkan
                 'profitidr': profitidr,
-                'pips': pips,
+                # 'pips': removed,
                 'result': "PROFIT" if result else "LOSS"
             }
             inserttradedata(data)
